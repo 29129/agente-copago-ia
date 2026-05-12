@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Copago IA | Estimador de Cobertura</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero-panel" aria-labelledby="app-title">
+        <nav class="topbar" aria-label="Principal">
+          <div class="brand">
+            <span class="brand-mark" aria-hidden="true">C</span>
+            <span>Copago IA</span>
+          </div>
+          <span class="status-pill">MVP Hackathon</span>
+        </nav>
+
+        <div class="hero-content">
+          <p class="eyebrow">Agente de cobertura para pacientes</p>
+          <h1 id="app-title">Estimaci&oacute;n r&aacute;pida de copago y hospital conveniente</h1>
+          <p class="hero-copy">
+            Describe tus s&iacute;ntomas, selecciona tu plan y recibe una orientaci&oacute;n clara:
+            especialidad sugerida, cobertura simulada, copago estimado y hospital recomendado.
+          </p>
+        </div>
+
+        <div class="metrics-grid" aria-label="Resumen del flujo">
+          <article>
+            <span>01</span>
+            <strong>S&iacute;ntomas</strong>
+            <p>Entrada conversacional simple.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <strong>Seguro</strong>
+            <p>Consulta de planes simulados.</p>
+          </article>
+          <article>
+            <span>03</span>
+            <strong>Copago</strong>
+            <p>Respuesta lista para el paciente.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="workspace" aria-label="Estimador de copago">
+        <div class="form-panel">
+          <div class="section-heading">
+            <p class="eyebrow">Nueva consulta</p>
+            <h2>Datos del paciente</h2>
+          </div>
+
+          <form id="coverage-form" class="coverage-form">
+            <label class="field">
+              <span>S&iacute;ntomas principales</span>
+              <textarea
+                id="symptoms"
+                name="symptoms"
+                rows="6"
+                placeholder="Ejemplo: dolor de garganta, fiebre leve y congestion desde hace dos dias"
+                required
+              ></textarea>
+            </label>
+
+            <div class="field-row">
+              <label class="field">
+                <span>Plan de seguro</span>
+                <select id="insurance-plan" name="insurancePlan" required>
+                  <option value="basico">Plan B&aacute;sico</option>
+                  <option value="plus" selected>Plan Plus</option>
+                  <option value="premium">Plan Premium</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>Ciudad</span>
+                <select id="city" name="city" required>
+                  <option value="quito">Quito</option>
+                  <option value="guayaquil" selected>Guayaquil</option>
+                  <option value="cuenca">Cuenca</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Preferencia</span>
+              <select id="preference" name="preference">
+                <option value="economico" selected>Menor copago</option>
+                <option value="cercano">Hospital cercano</option>
+                <option value="cobertura">Mayor cobertura</option>
+              </select>
+            </label>
+
+            <button class="primary-button" type="submit">
+              Estimar cobertura
+              <span aria-hidden="true">&rarr;</span>
+            </button>
+          </form>
+        </div>
+
+        <aside class="result-panel" aria-label="Resultado estimado">
+          <div class="section-heading">
+            <p class="eyebrow">Respuesta del agente</p>
+            <h2>Resultado estimado</h2>
+          </div>
+
+          <div id="empty-state" class="empty-state">
+            <div class="empty-icon" aria-hidden="true">+</div>
+            <p>Completa la consulta para ver la recomendaci&oacute;n del agente.</p>
+          </div>
+
+          <div id="result-card" class="result-card hidden" aria-live="polite">
+            <div class="result-summary">
+              <span class="tag">Especialidad sugerida</span>
+              <h3 id="specialty">Medicina general</h3>
+              <p id="reason">
+                Evaluaci&oacute;n inicial recomendada seg&uacute;n los s&iacute;ntomas reportados.
+              </p>
+            </div>
+
+            <div class="estimate-grid">
+              <div>
+                <span>Copago estimado</span>
+                <strong id="copay">$18</strong>
+              </div>
+              <div>
+                <span>Cobertura</span>
+                <strong id="coverage">80%</strong>
+              </div>
+            </div>
+
+            <div class="hospital-box">
+              <span>Hospital recomendado</span>
+              <strong id="hospital">Cl&iacute;nica Central</strong>
+              <p id="hospital-note">
+                Mejor balance entre cobertura del plan y costo para el paciente.
+              </p>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
