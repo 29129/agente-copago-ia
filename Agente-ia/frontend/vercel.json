@@ -1,8 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/copago/index.js": {
+      "maxDuration": 30
+    }
+  },
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/(.*\\.(?:html|css|js|ico|png|svg|webp|woff2?))$",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }

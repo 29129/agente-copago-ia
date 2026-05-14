@@ -27,8 +27,9 @@ Opcional en Railway (llamadas directas al webhook, p. ej. desde otro dominio): v
 ## Estructura del repositorio
 
 ```txt
-frontend/
+Agente-ia/frontend/   (Vercel: Root Directory = esta carpeta)
 backend-n8n/
 docs/
 .env.example
 README.md
+```
