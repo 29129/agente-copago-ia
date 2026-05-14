@@ -12,7 +12,8 @@ const hospitalNote = document.querySelector("#hospital-note");
 const agentAnswer = document.querySelector("#agent-answer");
 const hospitalOptions = document.querySelector("#hospital-options");
 
-const DEFAULT_N8N_WEBHOOK_URL = "https://jofrec.app.n8n.cloud/webhook-test/copago-agent";
+const DEFAULT_N8N_WEBHOOK_URL =
+  "https://agente-copago-ia-production.up.railway.app/webhook/agente-copago";
 
 const mockPlans = {
   basico: { coverageBoost: 0, copayDiscount: 0 },
