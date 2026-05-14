@@ -10,13 +10,13 @@
           "allowedOrigins": "*"
         }
       },
-      "id": "webhook_agente_copago",
+      "id": "ae829859-6c4b-4b8b-9c75-921b874060bc",
       "name": "01 Webhook - Recibir solicitud paciente",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        120,
-        300
+        -768,
+        144
       ],
       "webhookId": "agente-copago"
     },
@@ -24,13 +24,13 @@
       "parameters": {
         "jsCode": "// Normaliza y valida el input recibido desde frontend\nconst body = $json.body || $json;\n\nconst nombre = String(body.nombre || 'Paciente').trim();\nconst sintoma = String(body.sintoma || body.sintomas || '').trim();\nconst planSeguro = String(body.planSeguro || body.plan || 'Basico').trim();\n\nif (!sintoma || sintoma.length < 3) {\n  return [{\n    json: {\n      error: true,\n      statusCode: 400,\n      mensaje: 'Debes enviar un síntoma válido.',\n      ejemplo: {\n        nombre: 'Juan',\n        sintoma: 'dolor de pecho y mareos',\n        planSeguro: 'Premium'\n      }\n    }\n  }];\n}\n\nconst planesPermitidos = ['Basico', 'Estándar', 'Estandar', 'Premium'];\nconst planNormalizado = planSeguro.toLowerCase().includes('premium')\n  ? 'Premium'\n  : planSeguro.toLowerCase().includes('est')\n    ? 'Estándar'\n    : 'Basico';\n\nreturn [{\n  json: {\n    error: false,\n    nombre,\n    sintoma,\n    planSeguro: planNormalizado,\n    timestamp: new Date().toISOString()\n  }\n}];"
       },
-      "id": "code_validar_input",
+      "id": "345827ef-df79-4ff5-a616-f1567fafd9f9",
       "name": "02 Code - Validar y normalizar input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        380,
-        300
+        -496,
+        144
       ]
     },
     {
@@ -39,7 +39,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -56,13 +57,13 @@
         },
         "options": {}
       },
-      "id": "if_input_valido",
+      "id": "f080c027-e6c4-4d2e-9cd3-33a837523fd0",
       "name": "03 IF - ¿Input inválido?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        620,
-        300
+        -256,
+        144
       ]
     },
     {
@@ -73,71 +74,71 @@
           "responseCode": "={{ $json.statusCode || 400 }}"
         }
       },
-      "id": "respond_error_input",
+      "id": "015bf399-3df0-4b62-94eb-5292886d8c57",
       "name": "04 Respond - Error de validación",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        880,
-        160
+        0,
+        0
       ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.openai.com/v1/chat/completions",
-        "authentication": "none",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "Authorization",
-              "value": "=Bearer {{$env.OPENAI_API_KEY}}"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "x-goog-api-key",
+              "value": "AIzaSyBZvkCWisA4d_Cy31Vc2ZEGD10W4t-VW7Y"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{\n{\n  \"model\": $env.OPENAI_MODEL || \"gpt-4o-mini\",\n  \"temperature\": 0.2,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres un clasificador de síntomas para un MVP de hackathon. No das diagnóstico médico. Solo devuelves JSON válido con: especialidad, urgencia, razon, sintomasClave. Especialidades permitidas: Medicina General, Cardiología, Neurología, Gastroenterología, Traumatología, Dermatología, Ginecología, Pediatría, Otorrinolaringología, Neumología, Oftalmología, Urología. Urgencia permitida: baja, media, alta. Si hay dolor de pecho, dificultad respiratoria intensa, desmayo, convulsiones o signos graves, usa urgencia alta.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Paciente: \" + $json.nombre + \". Síntomas: \" + $json.sintoma + \". Devuelve únicamente JSON.\"\n    }\n  ]\n}\n}}"
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"Actúa como un clasificador de síntomas para un MVP de hackathon. No des diagnóstico médico. A partir de los síntomas del paciente, devuelve SOLO un JSON válido sin markdown, sin explicaciones adicionales. El JSON debe tener exactamente estas claves: especialidad, urgencia, razon, sintomasClave. Especialidades permitidas: Cardiología, Neurología, Neumología, Gastroenterología, Dermatología, Traumatología, Medicina General. Urgencia permitida: baja, media, alta. Síntomas del paciente: {{$json.sintoma}}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.2,\n    \"responseMimeType\": \"application/json\"\n  }\n}",
+        "options": {}
       },
-      "id": "http_openai_clasificar",
+      "id": "a2ee7066-bdda-477d-9c1e-e37cacc86114",
       "name": "05 HTTP - Clasificar síntomas con IA",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        880,
-        430
+        0,
+        272
       ],
       "continueOnFail": true
     },
     {
       "parameters": {
-        "jsCode": "// Une datos originales + respuesta de IA.\n// Si OpenAI falla, aplica fallback por palabras clave para que la demo nunca se caiga.\nconst input = $('02 Code - Validar y normalizar input').first().json;\nconst aiRaw = $json;\n\nfunction fallbackEspecialidad(s) {\n  const t = s.toLowerCase();\n  if (/(pecho|cardiaco|corazón|corazon|palpitaciones|presión alta|presion alta)/.test(t)) return { especialidad: 'Cardiología', urgencia: 'alta', razon: 'Los síntomas pueden estar relacionados con el sistema cardiovascular.' };\n  if (/(mareo|migraña|migraña|convuls|desmayo|debilidad|adormecimiento|cabeza)/.test(t)) return { especialidad: 'Neurología', urgencia: 'media', razon: 'Los síntomas se relacionan con el sistema nervioso.' };\n  if (/(estómago|estomago|diarrea|vómito|vomito|náusea|nausea|gastritis|abdomen)/.test(t)) return { especialidad: 'Gastroenterología', urgencia: 'media', razon: 'Los síntomas se relacionan con el sistema digestivo.' };\n  if (/(tos|respirar|respiración|respiracion|asma|pulmón|pulmon|flema)/.test(t)) return { especialidad: 'Neumología', urgencia: 'media', razon: 'Los síntomas se relacionan con vías respiratorias.' };\n  if (/(fractura|golpe|rodilla|hueso|torcedura|espalda|articulación|articulacion)/.test(t)) return { especialidad: 'Traumatología', urgencia: 'media', razon: 'Los síntomas se relacionan con lesiones musculoesqueléticas.' };\n  if (/(piel|roncha|picazón|picazon|alergia|sarpullido|grano|dermatitis)/.test(t)) return { especialidad: 'Dermatología', urgencia: 'baja', razon: 'Los síntomas se relacionan con piel.' };\n  if (/(garganta|oído|oido|nariz|sinusitis|amígdala|amigdala)/.test(t)) return { especialidad: 'Otorrinolaringología', urgencia: 'baja', razon: 'Los síntomas se relacionan con oído, nariz o garganta.' };\n  return { especialidad: 'Medicina General', urgencia: 'baja', razon: 'Los síntomas requieren una primera valoración médica general.' };\n}\n\nlet clasificacion = null;\n\ntry {\n  const content = aiRaw.choices?.[0]?.message?.content;\n  if (content) clasificacion = JSON.parse(content);\n} catch (e) {\n  clasificacion = null;\n}\n\nif (!clasificacion || !clasificacion.especialidad) {\n  clasificacion = fallbackEspecialidad(input.sintoma);\n  clasificacion.fuente = 'fallback_reglas';\n} else {\n  clasificacion.fuente = 'ia_openai';\n}\n\nreturn [{\n  json: {\n    ...input,\n    ia: clasificacion\n  }\n}];"
+        "jsCode": "const input = $input.first().json;\n\nlet aiText = null;\nlet parsed = null;\n\ntry {\n  aiText = input.candidates?.[0]?.content?.parts?.[0]?.text;\n\n  if (typeof aiText === \"string\") {\n    aiText = aiText\n      .replace(/```json/g, \"\")\n      .replace(/```/g, \"\")\n      .trim();\n\n    parsed = JSON.parse(aiText);\n  }\n} catch (error) {\n  parsed = null;\n}\n\nconst original = $('02 Code - Validar y normalizar input').first().json;\n\nfunction fallbackClasificacion(sintoma) {\n  const s = (sintoma || \"\").toLowerCase();\n\n  if (s.includes(\"pecho\") || s.includes(\"corazón\") || s.includes(\"cardio\")) {\n    return {\n      especialidad: \"Cardiología\",\n      urgencia: \"alta\",\n      razon: \"Los síntomas pueden estar relacionados con el sistema cardiovascular.\",\n      sintomasClave: [sintoma]\n    };\n  }\n\n  if (s.includes(\"mareo\") || s.includes(\"desmayo\") || s.includes(\"cabeza\") || s.includes(\"convuls\")) {\n    return {\n      especialidad: \"Neurología\",\n      urgencia: \"media\",\n      razon: \"Los síntomas pueden estar relacionados con el sistema neurológico.\",\n      sintomasClave: [sintoma]\n    };\n  }\n\n  if (s.includes(\"tos\") || s.includes(\"respirar\") || s.includes(\"fiebre\") || s.includes(\"pulmón\")) {\n    return {\n      especialidad: \"Neumología\",\n      urgencia: \"media\",\n      razon: \"Los síntomas pueden estar relacionados con el sistema respiratorio.\",\n      sintomasClave: [sintoma]\n    };\n  }\n\n  if (s.includes(\"estómago\") || s.includes(\"vomito\") || s.includes(\"vómito\") || s.includes(\"diarrea\") || s.includes(\"abdominal\")) {\n    return {\n      especialidad: \"Gastroenterología\",\n      urgencia: \"media\",\n      razon: \"Los síntomas pueden estar relacionados con el sistema digestivo.\",\n      sintomasClave: [sintoma]\n    };\n  }\n\n  if (s.includes(\"piel\") || s.includes(\"alergia\") || s.includes(\"roncha\") || s.includes(\"picazón\")) {\n    return {\n      especialidad: \"Dermatología\",\n      urgencia: \"baja\",\n      razon: \"Los síntomas pueden estar relacionados con la piel o una reacción alérgica.\",\n      sintomasClave: [sintoma]\n    };\n  }\n\n  if (s.includes(\"fractura\") || s.includes(\"golpe\") || s.includes(\"hueso\") || s.includes(\"torcedura\")) {\n    return {\n      especialidad: \"Traumatología\",\n      urgencia: \"media\",\n      razon: \"Los síntomas pueden estar relacionados con una lesión física.\",\n      sintomasClave: [sintoma]\n    };\n  }\n\n  return {\n    especialidad: \"Medicina General\",\n    urgencia: \"baja\",\n    razon: \"Los síntomas no permiten identificar una especialidad específica en este MVP.\",\n    sintomasClave: [sintoma]\n  };\n}\n\nconst clasificacion = parsed || fallbackClasificacion(original.sintoma);\n\nreturn [\n  {\n    json: {\n      ...original,\n      especialidad: clasificacion.especialidad || \"Medicina General\",\n      urgencia: clasificacion.urgencia || \"baja\",\n      razon: clasificacion.razon || \"Clasificación generada por el agente.\",\n      sintomasClave: clasificacion.sintomasClave || [original.sintoma],\n      fuenteClasificacion: parsed ? \"ia_gemini\" : \"fallback_reglas\"\n    }\n  }\n];"
       },
-      "id": "code_parse_ia",
+      "id": "8cb6b949-d914-4ddb-bc40-3f300dc07672",
       "name": "06 Code - Parsear IA con fallback",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1130,
-        430
+        256,
+        272
       ]
     },
     {
       "parameters": {
-        "jsCode": "// Datos simulados del MVP: planes, cobertura base y hospitales por especialidad.\nconst input = $json;\nconst especialidad = input.ia.especialidad || 'Medicina General';\nconst urgencia = input.ia.urgencia || 'baja';\n\nconst planes = {\n  'Basico': {\n    cobertura: 0.60,\n    copagoBase: {\n      'Medicina General': 18,\n      'Cardiología': 45,\n      'Neurología': 40,\n      'Gastroenterología': 35,\n      'Traumatología': 32,\n      'Dermatología': 28,\n      'Ginecología': 30,\n      'Pediatría': 25,\n      'Otorrinolaringología': 26,\n      'Neumología': 34,\n      'Oftalmología': 27,\n      'Urología': 33\n    }\n  },\n  'Estándar': {\n    cobertura: 0.75,\n    copagoBase: {\n      'Medicina General': 12,\n      'Cardiología': 28,\n      'Neurología': 26,\n      'Gastroenterología': 22,\n      'Traumatología': 20,\n      'Dermatología': 18,\n      'Ginecología': 18,\n      'Pediatría': 15,\n      'Otorrinolaringología': 16,\n      'Neumología': 21,\n      'Oftalmología': 17,\n      'Urología': 21\n    }\n  },\n  'Premium': {\n    cobertura: 0.90,\n    copagoBase: {\n      'Medicina General': 5,\n      'Cardiología': 15,\n      'Neurología': 14,\n      'Gastroenterología': 12,\n      'Traumatología': 10,\n      'Dermatología': 9,\n      'Ginecología': 10,\n      'Pediatría': 8,\n      'Otorrinolaringología': 8,\n      'Neumología': 11,\n      'Oftalmología': 9,\n      'Urología': 11\n    }\n  }\n};\n\nconst hospitales = [\n  { nombre: 'Hospital Central', especialidades: ['Cardiología','Neurología','Medicina General','Neumología'], precioConsulta: 80, score: 4.8 },\n  { nombre: 'Clínica San Rafael', especialidades: ['Gastroenterología','Traumatología','Dermatología','Medicina General'], precioConsulta: 65, score: 4.6 },\n  { nombre: 'Centro Médico Vida', especialidades: ['Medicina General','Pediatría','Ginecología','Otorrinolaringología','Oftalmología','Urología'], precioConsulta: 50, score: 4.4 },\n  { nombre: 'Hospital Metropolitano', especialidades: ['Cardiología','Neurología','Traumatología','Gastroenterología','Neumología'], precioConsulta: 95, score: 4.9 }\n];\n\nconst plan = planes[input.planSeguro] || planes['Basico'];\nlet copago = plan.copagoBase[especialidad] ?? plan.copagoBase['Medicina General'];\n\n// Ajuste simple por urgencia para demo.\nif (urgencia === 'alta') copago += 5;\nif (urgencia === 'media') copago += 2;\n\nconst candidatos = hospitales\n  .filter(h => h.especialidades.includes(especialidad))\n  .map(h => ({\n    ...h,\n    costoPacienteEstimado: Math.round(h.precioConsulta * (1 - plan.cobertura) + copago)\n  }))\n  .sort((a, b) => a.costoPacienteEstimado - b.costoPacienteEstimado || b.score - a.score);\n\nconst recomendado = candidatos[0] || hospitales[2];\n\nconst advertencia = urgencia === 'alta'\n  ? 'Importante: por la naturaleza de los síntomas, se recomienda buscar atención médica urgente o acudir a emergencias.'\n  : 'Esta recomendación es una estimación informativa para orientar la elección de cobertura y centro médico.';\n\nreturn [{\n  json: {\n    nombre: input.nombre,\n    especialidad,\n    urgencia,\n    cobertura: `${Math.round(plan.cobertura * 100)}%`,\n    copago: `$${copago}`,\n    hospitalRecomendado: recomendado.nombre,\n    costoPacienteEstimado: `$${recomendado.costoPacienteEstimado}`,\n    fuenteClasificacion: input.ia.fuente,\n    razon: input.ia.razon || 'Clasificación generada a partir de los síntomas reportados.',\n    mensaje: `Hola ${input.nombre}. Según tu plan ${input.planSeguro}, la especialidad sugerida es ${especialidad}. Tu copago estimado es de $${copago} y el hospital más conveniente es ${recomendado.nombre}, con costo estimado para paciente de $${recomendado.costoPacienteEstimado}. ${advertencia}`,\n    disclaimer: 'MVP de hackathon. No reemplaza diagnóstico médico profesional.',\n    metadata: {\n      planSeguro: input.planSeguro,\n      sintomasRecibidos: input.sintoma,\n      timestamp: input.timestamp\n    }\n  }\n}];"
+        "jsCode": "const data = $input.first()?.json || {};\n\nconst nombre = data.nombre || \"Paciente\";\nconst sintoma = data.sintoma || \"síntomas no especificados\";\nconst planSeguro = data.planSeguro || \"Basico\";\n\nconst especialidad = data.especialidad || \"Medicina General\";\nconst urgencia = data.urgencia || \"baja\";\nconst razon = data.razon || \"Clasificación generada por el agente.\";\nconst fuenteClasificacion = data.fuenteClasificacion || \"fallback_reglas\";\nconst sintomasClave = data.sintomasClave || [sintoma];\n\nconst planes = {\n  Basico: {\n    cobertura: 0.60,\n    copagoBase: 45\n  },\n  Estandar: {\n    cobertura: 0.75,\n    copagoBase: 30\n  },\n  Premium: {\n    cobertura: 0.90,\n    copagoBase: 20\n  }\n};\n\nconst hospitales = [\n  {\n    nombre: \"Hospital Central\",\n    especialidades: [\"Cardiología\", \"Neurología\", \"Medicina General\"],\n    costoConsulta: 280\n  },\n  {\n    nombre: \"Clínica San Rafael\",\n    especialidades: [\"Neumología\", \"Gastroenterología\", \"Medicina General\"],\n    costoConsulta: 240\n  },\n  {\n    nombre: \"Centro Médico Vida\",\n    especialidades: [\"Dermatología\", \"Medicina General\"],\n    costoConsulta: 180\n  },\n  {\n    nombre: \"Hospital Metropolitano\",\n    especialidades: [\"Traumatología\", \"Cardiología\", \"Medicina General\"],\n    costoConsulta: 300\n  }\n];\n\nconst plan = planes[planSeguro] || planes.Basico;\n\nconst hospitalesCompatibles = hospitales.filter(hospital =>\n  hospital.especialidades.includes(especialidad)\n);\n\nconst opciones = hospitalesCompatibles.length > 0\n  ? hospitalesCompatibles\n  : hospitales.filter(hospital => hospital.especialidades.includes(\"Medicina General\"));\n\nlet hospitalRecomendado = opciones[0];\n\nfor (const hospital of opciones) {\n  if (hospital.costoConsulta < hospitalRecomendado.costoConsulta) {\n    hospitalRecomendado = hospital;\n  }\n}\n\nconst costoPacienteEstimado = Math.round(\n  hospitalRecomendado.costoConsulta * (1 - plan.cobertura)\n);\n\nconst copago = plan.copagoBase;\n\nconst mensaje = `Hola ${nombre}. Según tu plan ${planSeguro}, la especialidad sugerida es ${especialidad}. Tu copago estimado es de $${copago} y el hospital más conveniente es ${hospitalRecomendado.nombre}, con costo estimado para paciente de $${costoPacienteEstimado}. Importante: por la naturaleza de los síntomas, se recomienda buscar atención médica urgente o acudir a emergencias.`;\n\nreturn [\n  {\n    json: {\n      nombre,\n      especialidad,\n      urgencia,\n      cobertura: `${Math.round(plan.cobertura * 100)}%`,\n      copago: `$${copago}`,\n      hospitalRecomendado: hospitalRecomendado.nombre,\n      costoPacienteEstimado: `$${costoPacienteEstimado}`,\n      fuenteClasificacion,\n      razon,\n      mensaje,\n      disclaimer: \"MVP de hackathon. No reemplaza diagnóstico médico profesional.\",\n      metadata: {\n        planSeguro,\n        sintomasRecibidos: sintoma,\n        sintomasClave,\n        timestamp: new Date().toISOString()\n      }\n    }\n  }\n];"
       },
-      "id": "code_calcular_copago",
+      "id": "583b2963-1c9e-44f4-95cc-09845a2c8ee4",
       "name": "07 Code - Calcular cobertura, copago y hospital",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1390,
-        430
+        512,
+        272
       ]
     },
     {
@@ -160,16 +161,17 @@
           }
         }
       },
-      "id": "respond_json_final",
+      "id": "4ff942ba-fb30-4747-ac6a-0d5d68cf6253",
       "name": "08 Respond - JSON final al frontend",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1650,
-        430
+        784,
+        272
       ]
     }
   ],
+  "pinData": {},
   "connections": {
     "01 Webhook - Recibir solicitud paciente": {
       "main": [
@@ -245,14 +247,15 @@
       ]
     }
   },
+  "active": true,
   "settings": {
     "executionOrder": "v1",
-    "saveManualExecutions": true,
-    "callerPolicy": "workflowsFromSameOwner"
+    "binaryMode": "separate"
   },
-  "staticData": null,
-  "pinData": {},
-  "versionId": "922fb32f-2321-4a6e-a3f8-fa86455fc3c4",
-  "triggerCount": 1,
+  "versionId": "e7a2a126-2a28-46b1-8509-615d35aa51ce",
+  "meta": {
+    "instanceId": "ed0542a9ac59bee5121d08885cee5044df3e3a5a1ef62cd69630812befe58474"
+  },
+  "id": "DDFgr37N12FpXcJJ",
   "tags": []
 }
