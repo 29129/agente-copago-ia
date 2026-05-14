@@ -1,0 +1,9 @@
+flowchart TD
+    A[Frontend fetch POST] --> B[Webhook público n8n /webhook/agente-copago]
+    B --> C[Validar y normalizar input]
+    C --> D{¿Input inválido?}
+    D -- Sí --> E[Responder error JSON 400]
+    D -- No --> F[OpenAI API clasifica síntomas]
+    F --> G[Parsear IA + fallback por reglas]
+    G --> H[Calcular cobertura, copago y hospital]
+    H --> I[Responder JSON limpio al frontend]
