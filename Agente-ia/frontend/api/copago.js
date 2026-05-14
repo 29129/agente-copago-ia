@@ -1,6 +1,6 @@
 const RAILWAY_WEBHOOK =
   process.env.N8N_WEBHOOK_URL ||
-  "https://agente-copago-ia-production.up.railway.app/webhook/agente-copago";
+  "https://primary-production-03ef8.up.railway.app/webhook/agente-copago";
 
 async function readJsonBody(req) {
   if (req.body && typeof req.body === "object" && !Buffer.isBuffer(req.body)) {

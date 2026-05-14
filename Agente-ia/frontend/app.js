@@ -13,7 +13,7 @@ const agentAnswer = document.querySelector("#agent-answer");
 const hospitalOptions = document.querySelector("#hospital-options");
 
 const RAILWAY_N8N_WEBHOOK_URL =
-  "https://agente-copago-ia-production.up.railway.app/webhook/agente-copago";
+  "https://primary-production-03ef8.up.railway.app/webhook/agente-copago";
 
 const mockPlans = {
   basico: { coverageBoost: 0, copayDiscount: 0 },
