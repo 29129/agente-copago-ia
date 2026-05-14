@@ -78,15 +78,6 @@ function getN8nWebhookUrl() {
     /* ignore malformed query */
   }
 
-  try {
-    const { hostname, origin, protocol } = window.location;
-    if (protocol.startsWith("http") && hostname.endsWith(".vercel.app")) {
-      return `${origin}/api/copago`;
-    }
-  } catch {
-    /* ignore */
-  }
-
   const fromWindow =
     typeof window !== "undefined" && window.__COPAGO_WEBHOOK_URL__ != null
       ? String(window.__COPAGO_WEBHOOK_URL__).trim()
@@ -181,9 +172,18 @@ function sortHospitalsByPreference(estimates, preference) {
 }
 
 function buildRequestPayload(formData) {
+  const symptoms = formData.get("symptoms").trim();
+  const insurancePlan = formData.get("insurancePlan");
+  const planSeguro =
+    insurancePlan === "premium" ? "Premium" : insurancePlan === "plus" ? "Estandar" : "Basico";
+
   return {
-    symptoms: formData.get("symptoms").trim(),
-    insurancePlan: formData.get("insurancePlan"),
+    nombre: "Paciente",
+    sintoma: symptoms,
+    sintomas: symptoms,
+    symptoms,
+    planSeguro,
+    insurancePlan,
     city: formData.get("city"),
     preference: formData.get("preference"),
   };
@@ -250,14 +250,17 @@ async function requestN8nEstimate(payload) {
 }
 
 function normalizeResult(result, fallbackResult) {
+  const normalizedHospital = result.hospital || result.hospitalRecomendado || fallbackResult.hospital;
+  const normalizedAgentAnswer = result.agentAnswer || result.mensaje || fallbackResult.agentAnswer;
+
   return {
-    specialty: result.specialty || fallbackResult.specialty,
+    specialty: result.specialty || result.especialidad || fallbackResult.specialty,
     reason: result.reason || fallbackResult.reason,
-    copay: result.copay || fallbackResult.copay,
-    coverage: result.coverage || fallbackResult.coverage,
-    hospital: result.hospital || fallbackResult.hospital,
+    copay: result.copay || result.copago || fallbackResult.copay,
+    coverage: result.coverage || result.cobertura || fallbackResult.coverage,
+    hospital: normalizedHospital,
     hospitalNote: result.hospitalNote || fallbackResult.hospitalNote,
-    agentAnswer: result.agentAnswer || fallbackResult.agentAnswer,
+    agentAnswer: normalizedAgentAnswer,
     hospitals: result.hospitals || result.hospitalOptions || fallbackResult.hospitals,
   };
 }
