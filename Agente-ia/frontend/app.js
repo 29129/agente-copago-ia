@@ -12,15 +12,6 @@ const hospitalNote = document.querySelector("#hospital-note");
 const agentAnswer = document.querySelector("#agent-answer");
 const hospitalOptions = document.querySelector("#hospital-options");
 
-const response = await fetch(webhookUrl, {
-  method: "POST",
-  mode: "cors",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(payload),
-});
-
 const RAILWAY_N8N_WEBHOOK_URL =
   "https://primary-production-03ef8.up.railway.app/webhook/agente-copago";
 
@@ -87,23 +78,6 @@ function getN8nWebhookUrl() {
     /* ignore malformed query */
   }
 
-  try {
-    const { hostname, origin, protocol } = window.location;
-    if (protocol.startsWith("http") && hostname.endsWith(".vercel.app")) {
-      return `${origin}/api/copago`;
-    }
-  } catch {
-    /* ignore */
-  }
-
-  const fromWindow =
-    typeof window !== "undefined" && window.__COPAGO_WEBHOOK_URL__ != null
-      ? String(window.__COPAGO_WEBHOOK_URL__).trim()
-      : "";
-  if (fromWindow) {
-    return fromWindow;
-  }
-
   return RAILWAY_N8N_WEBHOOK_URL;
 }
 
@@ -120,11 +94,15 @@ function formatCoverageCell(value) {
   if (value == null || value === "") {
     return "—";
   }
+
   const s = String(value).trim();
+
   if (/%/.test(s)) {
     return s;
   }
+
   const n = Number(s);
+
   return Number.isFinite(n) ? `${n}%` : s;
 }
 
@@ -132,19 +110,26 @@ function formatCopayCell(value) {
   if (value == null || value === "") {
     return "—";
   }
+
   const s = String(value).trim();
+
   if (s.startsWith("$")) {
     return s;
   }
+
   const n = Number(s.replace(/[$,\s]/g, ""));
+
   return Number.isFinite(n) ? `$${n}` : s;
 }
 
 function estimateSpecialty(symptoms) {
   const normalizedSymptoms = symptoms.toLowerCase();
+
   return (
     specialties.find((specialtyItem) =>
-      specialtyItem.keywords.some((keyword) => normalizedSymptoms.includes(keyword))
+      specialtyItem.keywords.some((keyword) =>
+        normalizedSymptoms.includes(keyword)
+      )
     ) || specialties[0]
   );
 }
@@ -157,9 +142,11 @@ function sortHospitalsByPreference(estimates, preference) {
       if (b.coverage !== a.coverage) {
         return b.coverage - a.coverage;
       }
+
       if (a.copay !== b.copay) {
         return a.copay - b.copay;
       }
+
       return String(a.name).localeCompare(String(b.name));
     });
   }
@@ -168,12 +155,15 @@ function sortHospitalsByPreference(estimates, preference) {
     return copy.sort((a, b) => {
       const pa = a.proximityRank ?? 99;
       const pb = b.proximityRank ?? 99;
+
       if (pa !== pb) {
         return pa - pb;
       }
+
       if (a.copay !== b.copay) {
         return a.copay - b.copay;
       }
+
       return b.coverage - a.coverage;
     });
   }
@@ -182,9 +172,11 @@ function sortHospitalsByPreference(estimates, preference) {
     if (a.copay !== b.copay) {
       return a.copay - b.copay;
     }
+
     if (b.coverage !== a.coverage) {
       return b.coverage - a.coverage;
     }
+
     return String(a.name).localeCompare(String(b.name));
   });
 }
@@ -192,8 +184,13 @@ function sortHospitalsByPreference(estimates, preference) {
 function buildRequestPayload(formData) {
   const symptoms = formData.get("symptoms").trim();
   const insurancePlan = formData.get("insurancePlan");
+
   const planSeguro =
-    insurancePlan === "premium" ? "Premium" : insurancePlan === "plus" ? "Estandar" : "Basico";
+    insurancePlan === "premium"
+      ? "Premium"
+      : insurancePlan === "plus"
+      ? "Estandar"
+      : "Basico";
 
   return {
     nombre: "Paciente",
@@ -213,15 +210,29 @@ function calculateEstimate(payload) {
   const preference = payload.preference;
   const city = payload.city;
 
-  const adjustment = selectedSpecialty.name === "Cardiologia" ? 12 : 0;
+  const adjustment =
+    selectedSpecialty.name === "Cardiologia" ? 12 : 0;
+
   const hospitalEstimates = sortHospitalsByPreference(
     hospitalNetwork
-      .filter((hospitalItem) => hospitalItem.cities.includes(city))
+      .filter((hospitalItem) =>
+        hospitalItem.cities.includes(city)
+      )
       .map((hospitalItem) => ({
         name: hospitalItem.name,
-        coverage: Math.min(hospitalItem.baseCoverage + selectedPlan.coverageBoost, 95),
-        copay: Math.max(hospitalItem.baseCopay + adjustment - selectedPlan.copayDiscount, 8),
-        proximityRank: hospitalItem.proximityRank?.[city] ?? 5,
+        coverage: Math.min(
+          hospitalItem.baseCoverage +
+            selectedPlan.coverageBoost,
+          95
+        ),
+        copay: Math.max(
+          hospitalItem.baseCopay +
+            adjustment -
+            selectedPlan.copayDiscount,
+          8
+        ),
+        proximityRank:
+          hospitalItem.proximityRank?.[city] ?? 5,
       })),
     preference
   );
@@ -234,69 +245,128 @@ function calculateEstimate(payload) {
     copay: `$${bestHospital.copay}`,
     coverage: `${bestHospital.coverage}%`,
     hospital: bestHospital.name,
-    hospitalNote: `Recomendado en ${city} por ${
-      preference === "economico"
-        ? "tener el menor copago estimado entre los hospitales de la red para tu plan."
-        : preference === "cobertura"
-          ? "priorizar la mayor cobertura simulada entre las opciones disponibles."
-          : "priorizar la ubicacion mas cercana simulada, equilibrando costo cuando hay empate."
-    }`,
-    agentAnswer: `Segun tus sintomas, te sugiero consultar ${selectedSpecialty.name}. Revise los hospitales de la red en ${city} y la opcion mas conveniente es ${bestHospital.name} con un copago estimado de $${bestHospital.copay}.`,
+    hospitalNote: `Recomendado en ${city}.`,
+    agentAnswer: `Segun tus sintomas, te sugiero consultar ${selectedSpecialty.name}.`,
     hospitals: hospitalEstimates,
   };
 }
 
 async function requestN8nEstimate(payload) {
   const webhookUrl = getN8nWebhookUrl();
+
   if (!webhookUrl) {
     console.warn("No webhook URL available");
     return null;
   }
 
   console.log("Fetching from:", webhookUrl);
-  
-  const response = await fetch(webhookUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`Webhook error ${response.status}:`, errorText);
-    throw new Error(`n8n request failed: ${response.status} - ${errorText}`);
+  try {
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      console.error(
+        `Webhook error ${response.status}:`,
+        errorText
+      );
+
+      throw new Error(
+        `n8n request failed: ${response.status} - ${errorText}`
+      );
+    }
+
+    const data = await response.json();
+
+    console.log("n8n response:", data);
+
+    return data;
+  } catch (error) {
+    console.error("Fetch error:", error);
+    throw error;
   }
-
-  return response.json();
 }
 
 function normalizeResult(result, fallbackResult) {
-  const normalizedHospital = result.hospital || result.hospitalRecomendado || fallbackResult.hospital;
-  const normalizedAgentAnswer = result.agentAnswer || result.mensaje || fallbackResult.agentAnswer;
+  const normalizedHospital =
+    result.hospital ||
+    result.hospitalRecomendado ||
+    fallbackResult.hospital;
+
+  const normalizedAgentAnswer =
+    result.agentAnswer ||
+    result.mensaje ||
+    fallbackResult.agentAnswer;
 
   return {
-    specialty: result.specialty || result.especialidad || fallbackResult.specialty,
-    reason: result.reason || fallbackResult.reason,
-    copay: result.copay || result.copago || fallbackResult.copay,
-    coverage: result.coverage || result.cobertura || fallbackResult.coverage,
+    specialty:
+      result.specialty ||
+      result.especialidad ||
+      fallbackResult.specialty,
+
+    reason:
+      result.reason ||
+      result.razon ||
+      fallbackResult.reason,
+
+    copay:
+      result.copay ||
+      result.copago ||
+      fallbackResult.copay,
+
+    coverage:
+      result.coverage ||
+      result.cobertura ||
+      fallbackResult.coverage,
+
     hospital: normalizedHospital,
-    hospitalNote: result.hospitalNote || fallbackResult.hospitalNote,
+
+    hospitalNote:
+      result.hospitalNote ||
+      fallbackResult.hospitalNote,
+
     agentAnswer: normalizedAgentAnswer,
-    hospitals: result.hospitals || result.hospitalOptions || fallbackResult.hospitals,
+
+    hospitals:
+      result.hospitals ||
+      fallbackResult.hospitals,
   };
 }
 
 function renderHospitalOptions(hospitals) {
-  const list = Array.isArray(hospitals) ? hospitals : [];
+  const list = Array.isArray(hospitals)
+    ? hospitals
+    : [];
+
   hospitalOptions.innerHTML = list
     .map(
       (hospitalItem, index) => `
-        <div class="comparison-row ${index === 0 ? "is-best" : ""}" role="row">
-          <strong role="cell">${escapeHtml(hospitalItem.name ?? "")}</strong>
-          <span role="cell">${escapeHtml(formatCoverageCell(hospitalItem.coverage))}</span>
-          <span role="cell">${escapeHtml(formatCopayCell(hospitalItem.copay))}</span>
+        <div class="comparison-row ${
+          index === 0 ? "is-best" : ""
+        }" role="row">
+          <strong role="cell">
+            ${escapeHtml(hospitalItem.name ?? "")}
+          </strong>
+
+          <span role="cell">
+            ${escapeHtml(
+              formatCoverageCell(hospitalItem.coverage)
+            )}
+          </span>
+
+          <span role="cell">
+            ${escapeHtml(
+              formatCopayCell(hospitalItem.copay)
+            )}
+          </span>
         </div>
       `
     )
@@ -305,6 +375,7 @@ function renderHospitalOptions(hospitals) {
 
 function setLoading(isLoading) {
   submitButton.disabled = isLoading;
+
   submitButton.innerHTML = isLoading
     ? 'Consultando agente <span aria-hidden="true">...</span>'
     : 'Estimar cobertura <span aria-hidden="true">&rarr;</span>';
@@ -318,6 +389,7 @@ function renderResult(result) {
   coverage.textContent = result.coverage;
   hospital.textContent = result.hospital;
   hospitalNote.textContent = result.hospitalNote;
+
   renderHospitalOptions(result.hospitals);
 
   emptyState.classList.add("hidden");
@@ -326,21 +398,37 @@ function renderResult(result) {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
+
   const formData = new FormData(form);
+
   const payload = buildRequestPayload(formData);
-  const fallbackResult = calculateEstimate(payload);
+
+  const fallbackResult =
+    calculateEstimate(payload);
 
   setLoading(true);
 
   try {
-    const n8nResult = await requestN8nEstimate(payload);
-    const result = n8nResult ? normalizeResult(n8nResult, fallbackResult) : fallbackResult;
+    const n8nResult =
+      await requestN8nEstimate(payload);
+
+    const result = n8nResult
+      ? normalizeResult(
+          n8nResult,
+          fallbackResult
+        )
+      : fallbackResult;
+
     renderResult(result);
   } catch (error) {
     console.error("Full error:", error);
+
     renderResult({
       ...fallbackResult,
-      agentAnswer: `${fallbackResult.agentAnswer}\n\n⚠️ El agente n8n no respondió (${error.message}). Usando estimación local.`,
+      agentAnswer:
+        `${fallbackResult.agentAnswer}
+
+⚠️ El agente n8n no respondió (${error.message}).`,
     });
   } finally {
     setLoading(false);
