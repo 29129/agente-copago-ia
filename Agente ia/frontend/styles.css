@@ -34,7 +34,7 @@ textarea {
 .app-shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: minmax(320px, 0.82fr) minmax(420px, 1.18fr);
+  grid-template-columns: minmax(280px, 0.68fr) minmax(620px, 1.32fr);
 }
 
 .hero-panel {
@@ -55,7 +55,10 @@ textarea {
 .brand,
 .metrics-grid,
 .field-row,
-.estimate-grid {
+.estimate-grid,
+.agent-message,
+.comparison-header,
+.comparison-row {
   display: flex;
 }
 
@@ -147,7 +150,8 @@ h1 {
 .metrics-grid span,
 .tag,
 .estimate-grid span,
-.hospital-box span {
+.hospital-box span,
+.comparison-row-head span {
   display: block;
   color: var(--muted);
   font-size: 0.78rem;
@@ -174,14 +178,15 @@ h1 {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.82fr);
+  grid-template-columns: minmax(300px, 0.95fr) minmax(340px, 1.05fr);
   gap: 24px;
   align-content: center;
-  padding: 48px;
+  padding: 36px;
 }
 
 .form-panel,
 .result-panel {
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -195,6 +200,7 @@ h1 {
 .result-panel {
   min-height: 530px;
   padding: 28px;
+  overflow: hidden;
 }
 
 .section-heading h2 {
@@ -315,6 +321,7 @@ select:focus {
 }
 
 .result-card {
+  min-width: 0;
   display: grid;
   gap: 18px;
 }
@@ -325,10 +332,41 @@ select:focus {
 
 .result-summary,
 .hospital-box,
-.estimate-grid div {
+.estimate-grid div,
+.comparison-box,
+.agent-message {
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fbfdff;
+}
+
+.agent-message {
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: var(--accent-soft);
+}
+
+.agent-avatar {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.agent-message p {
+  min-width: 0;
+  margin: 0;
+  color: #164e50;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .result-summary {
@@ -350,6 +388,7 @@ select:focus {
   margin-bottom: 0;
   color: var(--muted);
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .estimate-grid {
@@ -378,10 +417,93 @@ select:focus {
   font-size: 1.25rem;
 }
 
+.comparison-box {
+  padding: 18px;
+}
+
+.comparison-header {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.comparison-header h3 {
+  margin-bottom: 0;
+  font-size: 1.1rem;
+}
+
+.best-label {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #b45309;
+  padding: 7px 10px;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.comparison-table {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.comparison-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(68px, 0.7fr) minmax(62px, 0.55fr);
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.comparison-row:last-child {
+  border-bottom: 0;
+}
+
+.comparison-row-head {
+  background: #f8fafc;
+}
+
+.comparison-row strong {
+  min-width: 0;
+  color: var(--panel-strong);
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+
+.comparison-row span {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.comparison-row.is-best {
+  background: #f0fdfa;
+}
+
+.comparison-row.is-best strong {
+  color: var(--accent-strong);
+}
+
+.disclaimer {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
 @media (max-width: 1120px) {
   .app-shell,
   .workspace {
     grid-template-columns: 1fr;
+  }
+
+  .workspace {
+    align-content: start;
   }
 
   .hero-panel {
@@ -407,8 +529,14 @@ select:focus {
   .topbar,
   .metrics-grid,
   .field-row,
-  .estimate-grid {
+  .estimate-grid,
+  .comparison-header {
     flex-direction: column;
+  }
+
+  .comparison-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 
   h1 {

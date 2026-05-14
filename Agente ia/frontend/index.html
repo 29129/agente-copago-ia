@@ -20,7 +20,6 @@
             <span class="brand-mark" aria-hidden="true">C</span>
             <span>Copago IA</span>
           </div>
-          <span class="status-pill">MVP Hackathon</span>
         </nav>
 
         <div class="hero-content">
@@ -118,6 +117,13 @@
           </div>
 
           <div id="result-card" class="result-card hidden" aria-live="polite">
+            <div class="agent-message">
+              <span class="agent-avatar" aria-hidden="true">AI</span>
+              <p id="agent-answer">
+                Analice los datos de tu plan y encontre la opcion mas conveniente.
+              </p>
+            </div>
+
             <div class="result-summary">
               <span class="tag">Especialidad sugerida</span>
               <h3 id="specialty">Medicina general</h3>
@@ -144,6 +150,30 @@
                 Mejor balance entre cobertura del plan y costo para el paciente.
               </p>
             </div>
+
+            <div class="comparison-box">
+              <div class="comparison-header">
+                <div>
+                  <span class="tag">Red de hospitales</span>
+                  <h3>Comparativa economica</h3>
+                </div>
+                <span class="best-label">Mejor opcion</span>
+              </div>
+
+              <div class="comparison-table" role="table" aria-label="Comparativa de hospitales">
+                <div class="comparison-row comparison-row-head" role="row">
+                  <span role="columnheader">Hospital</span>
+                  <span role="columnheader">Cobertura</span>
+                  <span role="columnheader">Copago</span>
+                </div>
+                <div id="hospital-options"></div>
+              </div>
+            </div>
+
+            <p class="disclaimer">
+              Estimacion informativa basada en datos simulados. El valor final debe confirmarse
+              con la aseguradora o el hospital antes de la atencion.
+            </p>
           </div>
         </aside>
       </section>
