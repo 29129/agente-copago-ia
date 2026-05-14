@@ -78,6 +78,15 @@ function getN8nWebhookUrl() {
     /* ignore malformed query */
   }
 
+  try {
+    const { hostname, origin, protocol } = window.location;
+    if (protocol.startsWith("http") && hostname.endsWith(".vercel.app")) {
+      return `${origin}/api/copago`;
+    }
+  } catch {
+    /* ignore */
+  }
+
   const fromWindow =
     typeof window !== "undefined" && window.__COPAGO_WEBHOOK_URL__ != null
       ? String(window.__COPAGO_WEBHOOK_URL__).trim()
