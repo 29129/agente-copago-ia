@@ -11,6 +11,8 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
+    <!-- Produccion: descomenta y define la URL del webhook (Railway / n8n) antes de app.js -->
+    <!-- <script>window.__COPAGO_WEBHOOK_URL__ = "https://tu-dominio/webhook/copago";</script> -->
   </head>
   <body>
     <main class="app-shell">
@@ -179,6 +181,7 @@
       </section>
     </main>
 
+    <!-- Override local: ?webhook=https%3A%2F%2F... (URL codificada) -->
     <script src="./app.js"></script>
   </body>
 </html>

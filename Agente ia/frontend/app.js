@@ -12,7 +12,7 @@ const hospitalNote = document.querySelector("#hospital-note");
 const agentAnswer = document.querySelector("#agent-answer");
 const hospitalOptions = document.querySelector("#hospital-options");
 
-const N8N_WEBHOOK_URL = "https://jofrec.app.n8n.cloud/webhook-test/copago-agent";
+const DEFAULT_N8N_WEBHOOK_URL = "https://jofrec.app.n8n.cloud/webhook-test/copago-agent";
 
 const mockPlans = {
   basico: { coverageBoost: 0, copayDiscount: 0 },
@@ -21,9 +21,27 @@ const mockPlans = {
 };
 
 const hospitalNetwork = [
-  { name: "Hospital Municipal", baseCoverage: 65, baseCopay: 32, cities: ["quito", "guayaquil"] },
-  { name: "Clinica Central", baseCoverage: 72, baseCopay: 30, cities: ["guayaquil", "cuenca"] },
-  { name: "Hospital Metropolitano", baseCoverage: 78, baseCopay: 36, cities: ["quito", "guayaquil", "cuenca"] },
+  {
+    name: "Hospital Municipal",
+    baseCoverage: 65,
+    baseCopay: 32,
+    cities: ["quito", "guayaquil"],
+    proximityRank: { quito: 1, guayaquil: 3 },
+  },
+  {
+    name: "Clinica Central",
+    baseCoverage: 72,
+    baseCopay: 30,
+    cities: ["guayaquil", "cuenca"],
+    proximityRank: { guayaquil: 1, cuenca: 2 },
+  },
+  {
+    name: "Hospital Metropolitano",
+    baseCoverage: 78,
+    baseCopay: 36,
+    cities: ["quito", "guayaquil", "cuenca"],
+    proximityRank: { quito: 2, guayaquil: 2, cuenca: 1 },
+  },
 ];
 
 const specialties = [
@@ -49,6 +67,60 @@ const specialties = [
   },
 ];
 
+function getN8nWebhookUrl() {
+  const fromWindow =
+    typeof window !== "undefined" && window.__COPAGO_WEBHOOK_URL__ != null
+      ? String(window.__COPAGO_WEBHOOK_URL__).trim()
+      : "";
+  if (fromWindow) {
+    return fromWindow;
+  }
+
+  try {
+    const raw = new URLSearchParams(window.location.search).get("webhook");
+    if (raw) {
+      return decodeURIComponent(raw.trim());
+    }
+  } catch {
+    /* ignore malformed query */
+  }
+
+  return DEFAULT_N8N_WEBHOOK_URL;
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatCoverageCell(value) {
+  if (value == null || value === "") {
+    return "—";
+  }
+  const s = String(value).trim();
+  if (/%/.test(s)) {
+    return s;
+  }
+  const n = Number(s);
+  return Number.isFinite(n) ? `${n}%` : s;
+}
+
+function formatCopayCell(value) {
+  if (value == null || value === "") {
+    return "—";
+  }
+  const s = String(value).trim();
+  if (s.startsWith("$")) {
+    return s;
+  }
+  const n = Number(s.replace(/[$,\s]/g, ""));
+  return Number.isFinite(n) ? `$${n}` : s;
+}
+
 function estimateSpecialty(symptoms) {
   const normalizedSymptoms = symptoms.toLowerCase();
   return (
@@ -56,6 +128,46 @@ function estimateSpecialty(symptoms) {
       specialtyItem.keywords.some((keyword) => normalizedSymptoms.includes(keyword))
     ) || specialties[0]
   );
+}
+
+function sortHospitalsByPreference(estimates, preference) {
+  const copy = [...estimates];
+
+  if (preference === "cobertura") {
+    return copy.sort((a, b) => {
+      if (b.coverage !== a.coverage) {
+        return b.coverage - a.coverage;
+      }
+      if (a.copay !== b.copay) {
+        return a.copay - b.copay;
+      }
+      return String(a.name).localeCompare(String(b.name));
+    });
+  }
+
+  if (preference === "cercano") {
+    return copy.sort((a, b) => {
+      const pa = a.proximityRank ?? 99;
+      const pb = b.proximityRank ?? 99;
+      if (pa !== pb) {
+        return pa - pb;
+      }
+      if (a.copay !== b.copay) {
+        return a.copay - b.copay;
+      }
+      return b.coverage - a.coverage;
+    });
+  }
+
+  return copy.sort((a, b) => {
+    if (a.copay !== b.copay) {
+      return a.copay - b.copay;
+    }
+    if (b.coverage !== a.coverage) {
+      return b.coverage - a.coverage;
+    }
+    return String(a.name).localeCompare(String(b.name));
+  });
 }
 
 function buildRequestPayload(formData) {
@@ -74,14 +186,17 @@ function calculateEstimate(payload) {
   const city = payload.city;
 
   const adjustment = selectedSpecialty.name === "Cardiologia" ? 12 : 0;
-  const hospitalEstimates = hospitalNetwork
-    .filter((hospitalItem) => hospitalItem.cities.includes(city))
-    .map((hospitalItem) => ({
-      name: hospitalItem.name,
-      coverage: Math.min(hospitalItem.baseCoverage + selectedPlan.coverageBoost, 95),
-      copay: Math.max(hospitalItem.baseCopay + adjustment - selectedPlan.copayDiscount, 8),
-    }))
-    .sort((firstHospital, secondHospital) => firstHospital.copay - secondHospital.copay);
+  const hospitalEstimates = sortHospitalsByPreference(
+    hospitalNetwork
+      .filter((hospitalItem) => hospitalItem.cities.includes(city))
+      .map((hospitalItem) => ({
+        name: hospitalItem.name,
+        coverage: Math.min(hospitalItem.baseCoverage + selectedPlan.coverageBoost, 95),
+        copay: Math.max(hospitalItem.baseCopay + adjustment - selectedPlan.copayDiscount, 8),
+        proximityRank: hospitalItem.proximityRank?.[city] ?? 5,
+      })),
+    preference
+  );
 
   const bestHospital = hospitalEstimates[0];
 
@@ -93,10 +208,10 @@ function calculateEstimate(payload) {
     hospital: bestHospital.name,
     hospitalNote: `Recomendado en ${city} por ${
       preference === "economico"
-        ? "tener el menor copago estimado para tu plan."
+        ? "tener el menor copago estimado entre los hospitales de la red para tu plan."
         : preference === "cobertura"
-          ? "ofrecer mejor cobertura simulada para esta consulta."
-          : "mantener una buena relacion entre acceso y costo."
+          ? "priorizar la mayor cobertura simulada entre las opciones disponibles."
+          : "priorizar la ubicacion mas cercana simulada, equilibrando costo cuando hay empate."
     }`,
     agentAnswer: `Segun tus sintomas, te sugiero consultar ${selectedSpecialty.name}. Revise los hospitales de la red en ${city} y la opcion mas conveniente es ${bestHospital.name} con un copago estimado de $${bestHospital.copay}.`,
     hospitals: hospitalEstimates,
@@ -104,11 +219,12 @@ function calculateEstimate(payload) {
 }
 
 async function requestN8nEstimate(payload) {
-  if (!N8N_WEBHOOK_URL) {
+  const webhookUrl = getN8nWebhookUrl();
+  if (!webhookUrl) {
     return null;
   }
 
-  const response = await fetch(N8N_WEBHOOK_URL, {
+  const response = await fetch(webhookUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -137,13 +253,14 @@ function normalizeResult(result, fallbackResult) {
 }
 
 function renderHospitalOptions(hospitals) {
-  hospitalOptions.innerHTML = hospitals
+  const list = Array.isArray(hospitals) ? hospitals : [];
+  hospitalOptions.innerHTML = list
     .map(
       (hospitalItem, index) => `
         <div class="comparison-row ${index === 0 ? "is-best" : ""}" role="row">
-          <strong role="cell">${hospitalItem.name}</strong>
-          <span role="cell">${hospitalItem.coverage}%</span>
-          <span role="cell">$${hospitalItem.copay}</span>
+          <strong role="cell">${escapeHtml(hospitalItem.name ?? "")}</strong>
+          <span role="cell">${escapeHtml(formatCoverageCell(hospitalItem.coverage))}</span>
+          <span role="cell">${escapeHtml(formatCopayCell(hospitalItem.copay))}</span>
         </div>
       `
     )
