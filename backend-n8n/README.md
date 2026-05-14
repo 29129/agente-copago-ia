@@ -1,60 +1,28 @@
-# Hackathon - Agente IA Estimador de Copago y Cobertura
+# Estimador Agéntico de Copago y Cobertura para el Paciente
 
-MVP con n8n + OpenAI + Railway.
+MVP desarrollado para hackathon de inteligencia artificial.
 
-## Endpoint principal
+## Descripción
 
-POST `https://TU-DOMINIO-RAILWAY.up.railway.app/webhook/agente-copago`
+Este proyecto implementa un agente conversacional capaz de recibir síntomas del paciente, analizar la especialidad médica sugerida, calcular un copago estimado según el plan de seguro y recomendar el hospital más conveniente económicamente.
 
-### Input
+## Arquitectura
 
-```json
-{
-  "nombre": "Juan",
-  "sintoma": "dolor de pecho y mareos",
-  "planSeguro": "Premium"
-}
-```
+Frontend Web  
+↓  
+Webhook público de n8n  
+↓  
+OpenAI API  
+↓  
+Lógica simulada de cobertura y copago  
+↓  
+Respuesta JSON al frontend  
 
-### Output esperado
-
-```json
-{
-  "nombre": "Juan",
-  "especialidad": "Cardiología",
-  "urgencia": "alta",
-  "cobertura": "90%",
-  "copago": "$20",
-  "hospitalRecomendado": "Hospital Central",
-  "costoPacienteEstimado": "$28",
-  "mensaje": "..."
-}
-```
-
-## Variables Railway
-
-```env
-PORT=5678
-N8N_PORT=5678
-N8N_PROTOCOL=https
-N8N_HOST=TU-DOMINIO-RAILWAY.up.railway.app
-WEBHOOK_URL=https://TU-DOMINIO-RAILWAY.up.railway.app/
-N8N_ENCRYPTION_KEY=CAMBIA_ESTO_POR_UNA_CLAVE_LARGA
-N8N_BASIC_AUTH_ACTIVE=true
-N8N_BASIC_AUTH_USER=admin
-N8N_BASIC_AUTH_PASSWORD=CAMBIA_ESTA_PASSWORD
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o-mini
-GENERIC_TIMEZONE=America/Guayaquil
-TZ=America/Guayaquil
-```
-
-## Estructura
+## Estructura del repositorio
 
 ```txt
-/workflows
-  agente_principal.json
+frontend/
+backend-n8n/
+docs/
+.env.example
 README.md
-railway.json
-Dockerfile
-```
