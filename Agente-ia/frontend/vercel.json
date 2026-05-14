@@ -1,6 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
+    "api/copago.js": {
+      "maxDuration": 30
+    },
     "api/copago/index.js": {
       "maxDuration": 30
     }

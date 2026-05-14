@@ -4,6 +4,6 @@
   "version": "1.0.0",
   "description": "UI estatica + funcion serverless /api/copago (proxy n8n)",
   "engines": {
-    "node": ">=20"
+    "node": "20.x"
   }
 }
