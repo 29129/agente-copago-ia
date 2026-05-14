@@ -12,7 +12,7 @@ const hospitalNote = document.querySelector("#hospital-note");
 const agentAnswer = document.querySelector("#agent-answer");
 const hospitalOptions = document.querySelector("#hospital-options");
 
-const DEFAULT_N8N_WEBHOOK_URL =
+const RAILWAY_N8N_WEBHOOK_URL =
   "https://agente-copago-ia-production.up.railway.app/webhook/agente-copago";
 
 const mockPlans = {
@@ -86,7 +86,16 @@ function getN8nWebhookUrl() {
     /* ignore malformed query */
   }
 
-  return DEFAULT_N8N_WEBHOOK_URL;
+  try {
+    const { hostname, origin, protocol } = window.location;
+    if (protocol.startsWith("http") && hostname.endsWith(".vercel.app")) {
+      return `${origin}/api/copago`;
+    }
+  } catch {
+    /* ignore */
+  }
+
+  return RAILWAY_N8N_WEBHOOK_URL;
 }
 
 function escapeHtml(text) {
