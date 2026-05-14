@@ -12,6 +12,15 @@ const hospitalNote = document.querySelector("#hospital-note");
 const agentAnswer = document.querySelector("#agent-answer");
 const hospitalOptions = document.querySelector("#hospital-options");
 
+const response = await fetch(webhookUrl, {
+  method: "POST",
+  mode: "cors",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(payload),
+});
+
 const RAILWAY_N8N_WEBHOOK_URL =
   "https://primary-production-03ef8.up.railway.app/webhook/agente-copago";
 
