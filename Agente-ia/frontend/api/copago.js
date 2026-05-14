@@ -42,17 +42,21 @@ module.exports = async (req, res) => {
   let payload;
   try {
     payload = await readJsonBody(req);
-  } catch {
+  } catch (err) {
+    console.error("[copago.js] Invalid JSON body:", err.message);
     return res.status(400).json({ error: "Invalid JSON body" });
   }
 
   try {
+    console.log("[copago.js] Proxying to:", RAILWAY_WEBHOOK);
     const upstream = await fetch(RAILWAY_WEBHOOK, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      timeout: 30000,
     });
 
+    console.log("[copago.js] Response status:", upstream.status);
     const text = await upstream.text();
     let data;
 
@@ -64,7 +68,12 @@ module.exports = async (req, res) => {
 
     return res.status(upstream.status).json(data);
   } catch (error) {
-    console.error("copago proxy:", error);
-    return res.status(502).json({ error: "Upstream error" });
+    console.error("[copago.js] Upstream error:", error.message);
+    console.error("[copago.js] Trying to reach:", RAILWAY_WEBHOOK);
+    return res.status(502).json({ 
+      error: "Upstream error",
+      details: error.message,
+      webhook: RAILWAY_WEBHOOK
+    });
   }
 };

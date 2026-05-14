@@ -240,9 +240,12 @@ function calculateEstimate(payload) {
 async function requestN8nEstimate(payload) {
   const webhookUrl = getN8nWebhookUrl();
   if (!webhookUrl) {
+    console.warn("No webhook URL available");
     return null;
   }
 
+  console.log("Fetching from:", webhookUrl);
+  
   const response = await fetch(webhookUrl, {
     method: "POST",
     headers: {
@@ -252,7 +255,9 @@ async function requestN8nEstimate(payload) {
   });
 
   if (!response.ok) {
-    throw new Error("n8n request failed");
+    const errorText = await response.text();
+    console.error(`Webhook error ${response.status}:`, errorText);
+    throw new Error(`n8n request failed: ${response.status} - ${errorText}`);
   }
 
   return response.json();
@@ -323,9 +328,10 @@ form.addEventListener("submit", async (event) => {
     const result = n8nResult ? normalizeResult(n8nResult, fallbackResult) : fallbackResult;
     renderResult(result);
   } catch (error) {
+    console.error("Full error:", error);
     renderResult({
       ...fallbackResult,
-      agentAnswer: `${fallbackResult.agentAnswer} Use una estimacion local porque el agente n8n no respondio en este momento.`,
+      agentAnswer: `${fallbackResult.agentAnswer}\n\n⚠️ El agente n8n no respondió (${error.message}). Usando estimación local.`,
     });
   } finally {
     setLoading(false);
