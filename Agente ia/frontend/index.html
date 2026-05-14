@@ -11,7 +11,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
-    <!-- Opcional: sobrescribe el webhook por defecto (app.js ya apunta a Railway) -->
+    <!-- Opcional (solo local u otro host): URL del webhook. En *.vercel.app no pongas Railway aqui (CORS): usa el proxy /api/copago. -->
     <!-- <script>window.__COPAGO_WEBHOOK_URL__ = "https://otro-dominio/webhook/...";</script> -->
   </head>
   <body>
@@ -182,6 +182,6 @@
     </main>
 
     <!-- Override local: ?webhook=https%3A%2F%2F... (URL codificada) -->
-    <script src="./app.js"></script>
+    <script src="./app.js?v=3"></script>
   </body>
 </html>

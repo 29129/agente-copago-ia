@@ -69,14 +69,6 @@ const specialties = [
 ];
 
 function getN8nWebhookUrl() {
-  const fromWindow =
-    typeof window !== "undefined" && window.__COPAGO_WEBHOOK_URL__ != null
-      ? String(window.__COPAGO_WEBHOOK_URL__).trim()
-      : "";
-  if (fromWindow) {
-    return fromWindow;
-  }
-
   try {
     const raw = new URLSearchParams(window.location.search).get("webhook");
     if (raw) {
@@ -93,6 +85,14 @@ function getN8nWebhookUrl() {
     }
   } catch {
     /* ignore */
+  }
+
+  const fromWindow =
+    typeof window !== "undefined" && window.__COPAGO_WEBHOOK_URL__ != null
+      ? String(window.__COPAGO_WEBHOOK_URL__).trim()
+      : "";
+  if (fromWindow) {
+    return fromWindow;
   }
 
   return RAILWAY_N8N_WEBHOOK_URL;
